@@ -15,6 +15,7 @@
         font-family: 'Comic Sans MS', cursive, sans-serif;
         overflow: hidden;
         padding: 10px;
+        position: relative;
     }
     h1 {
         font-size: clamp(1.8rem, 5vw, 3rem);
@@ -23,46 +24,120 @@
         text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
         animation: glow 1.5s ease-in-out infinite alternate;
         z-index: 10;
+        position: relative;
     }
     @keyframes glow {
         from { text-shadow: 0 0 10px #fff, 0 0 20px #f647df, 0 0 30px #f63ede; }
         to { text-shadow: 0 0 20px #fff, 0 0 30px #f62cdb, 0 0 40px #f84de1; }
     }
-    .balloon {
+    canvas {
         position: absolute;
-        width: clamp(25px, 8vw, 50px);
-        height: clamp(35px, 12vw, 70px);
-        background: black;
-        border-radius: 50% 50% 50% 50%;
-        animation: float 6s ease-in-out infinite;
-    }
-    @keyframes float {
-        0% { transform: translateY(100vh); }
-        100% { transform: translateY(-150px); }
+        top: 0;
+        left: 0;
+        pointer-events: none;
+        z-index: 5;
     }
 </style>
 </head>
 <body>
 
-<h1>🎉 Happy Birthday, Sni  ! 🎂</h1>
+<canvas id="fireworks"></canvas>
+<h1>🎉 Happy Birthday, Sni! 🎂</h1>
 
 <script>
-    function createBalloon() {
-        let balloon = document.createElement("div");
-        balloon.classList.add("balloon");
-        balloon.style.left = Math.random() * window.innerWidth + "px";
-        balloon.style.background = `hsl(${Math.random() * 360}, 70%, 60%)`;
-        balloon.style.animationDuration = (4 + Math.random() * 3) + "s";
-        document.body.appendChild(balloon);
+// ===== Fireworks Effect =====
+const canvas = document.getElementById("fireworks");
+const ctx = canvas.getContext("2d");
+canvas.width = window.innerWidth;
+canvas.height = window.innerHeight;
 
-        setTimeout(() => {
-            balloon.remove();
-        }, 7000);
+function random(min, max) {
+    return Math.random() * (max - min) + min;
+}
+
+let particles = [];
+
+function createFirework(x, y) {
+    const colors = ["#ff0", "#f0f", "#0ff", "#fff", "#ff6600", "#00ff66"];
+    for (let i = 0; i < 30; i++) {
+        particles.push({
+            x: x,
+            y: y,
+            color: colors[Math.floor(Math.random() * colors.length)],
+            radius: random(2, 4),
+            speedX: random(-3, 3),
+            speedY: random(-3, 3),
+            alpha: 1
+        });
     }
+}
 
-    setInterval(createBalloon, 300);
+function drawFireworks() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    particles.forEach((p, i) => {
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+        ctx.fillStyle = p.color;
+        ctx.globalAlpha = p.alpha;
+        ctx.fill();
+
+        p.x += p.speedX;
+        p.y += p.speedY;
+        p.alpha -= 0.02;
+
+        if (p.alpha <= 0) {
+            particles.splice(i, 1);
+        }
+    });
+    ctx.globalAlpha = 1;
+    requestAnimationFrame(drawFireworks);
+}
+
+setInterval(() => {
+    const textPos = document.querySelector("h1").getBoundingClientRect();
+    const fx = textPos.left + textPos.width / 2;
+    const fy = textPos.top - 20;
+    createFirework(fx, fy);
+}, 1200);
+
+drawFireworks();
+
+// ===== Balloon Effect =====
+function createBalloon() {
+    const balloon = document.createElement("div");
+    balloon.style.position = "absolute";
+    balloon.style.bottom = "-100px";
+    balloon.style.width = "40px";
+    balloon.style.height = "50px";
+    balloon.style.borderRadius = "50% 50% 45% 45%";
+    balloon.style.background = `hsl(${Math.random() * 360}, 80%, 60%)`;
+    balloon.style.boxShadow = "inset -5px -10px rgba(0,0,0,0.2)";
+    balloon.style.left = `${Math.random() * window.innerWidth}px`;
+
+    const rope = document.createElement("div");
+    rope.style.position = "absolute";
+    rope.style.bottom = "-15px";
+    rope.style.left = "50%";
+    rope.style.width = "2px";
+    rope.style.height = "15px";
+    rope.style.background = "#555";
+    rope.style.transform = "translateX(-50%)";
+    balloon.appendChild(rope);
+
+    const duration = 4 + Math.random() * 3;
+    balloon.style.transition = `transform ${duration}s linear, opacity ${duration}s linear`;
+    document.body.appendChild(balloon);
+
+    requestAnimationFrame(() => {
+        balloon.style.transform = "translateY(-120vh)";
+        balloon.style.opacity = "0.7";
+    });
+
+    setTimeout(() => balloon.remove(), duration * 1000);
+}
+
+setInterval(createBalloon, 500);
 </script>
 
 </body>
 </html>
-
